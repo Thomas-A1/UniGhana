@@ -77,7 +77,7 @@ function LoginPage() {
     console.log('Sending request to:', '/api/login');
     try {
       const response = await fetch(
-        "https://unighana-backend-awyo.onrender.com/login",
+        `${import.meta.env.VITE_API_BASE_URL}/login`,
         {
           method: "POST",
           headers: {
