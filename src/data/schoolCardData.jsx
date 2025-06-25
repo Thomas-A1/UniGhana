@@ -60,7 +60,7 @@ export async function getSchoolCardData() {
     return cached.data;
   } else if (cached && Array.isArray(cached.data)) {
     // Cache expired but available: return stale and update in background
-    fetchAndUpdateCache(); // async, no await
+    fetchAndUpdateCache();
     return cached.data;
   } else {
     // No cache or invalid: fetch fresh data and return (with fallback to staticData)
