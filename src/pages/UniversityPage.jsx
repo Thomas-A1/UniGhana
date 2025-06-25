@@ -79,7 +79,7 @@ const UniversityPage = () => {
       if ((id === "3" || id === "knust") && isExpired) {
         setApiLoading(true);
         try {
-          const response = await fetch('/api/schools/knust-admission');
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/schools/knust-admission`);
           
           if (response.status === 500) {
             setServerError(true);
@@ -130,11 +130,13 @@ const UniversityPage = () => {
   useEffect(() => {
     if (!userId || !id) return;
 
-    fetch(`/api/bookmarks/${userId}`)
-      .then(res => res.json())
-      .then(data => {
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmarks/${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success && Array.isArray(data.bookmarks)) {
-          const isBookmarked = data.bookmarks.some(school => school.id === id);
+          const isBookmarked = data.bookmarks.some(
+            (school) => school.id === id
+          );
           setBookmarked(isBookmarked);
         }
       })
@@ -203,7 +205,7 @@ const UniversityPage = () => {
 
     try {
       if (Bookmarked) {
-        const res = await fetch('/api/unbookmark', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/unbookmark`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, schoolId: id }),
@@ -216,7 +218,7 @@ const UniversityPage = () => {
           toast.error("Failed to remove bookmark");
         }
       } else {
-        const res = await fetch('/api/bookmark', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmark`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, school: university }),

@@ -91,7 +91,7 @@ const Profile = () => {
   const handleResendVerification = async () => {
     try {
       const authToken = sessionStorage.getItem('authToken');
-      const response = await fetch('/api/resend-verification', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -34,7 +34,7 @@ export const BookmarkProvider = ({ children }) => {
 
       setLoading(true);
       try {
-        const res = await fetch(`/api/bookmarks/${userId}`);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmarks/${userId}`);
         const data = await res.json();
 
         if (data.success && Array.isArray(data.bookmarks)) {
@@ -74,7 +74,7 @@ export const BookmarkProvider = ({ children }) => {
     }
 
     const isBookmarked = bookmarks.includes(id);
-    const endpoint = isBookmarked ? "/api/unbookmark" : "/api/bookmark";
+    const endpoint = isBookmarked ? `${import.meta.env.VITE_API_BASE_URL}/unbookmark` : `${import.meta.env.VITE_API_BASE_URL}/bookmark`;
     const payload = isBookmarked
       ? { userId, schoolId: id }
       : { userId, school };

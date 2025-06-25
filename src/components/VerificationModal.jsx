@@ -39,7 +39,7 @@ const VerificationModal = ({ userId, email, onResendCode, onClose }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/verify-email', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/verify-email`, {
         
         method: 'POST',
         headers: {

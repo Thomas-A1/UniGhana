@@ -82,7 +82,7 @@ function RegisterPage() {
     setLoading(true);
     console.log('Sending request to:', '/api/signup');
     try {
-      const response = await fetch('/api/signup', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ function RegisterPage() {
 
   const handleResendCode = async () => {
     try {
-      const response = await fetch('/api/resend-verification', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
