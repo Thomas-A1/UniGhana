@@ -74,7 +74,7 @@ export async function getSchoolCardData() {
 
   async function fetchAndUpdateCache() {
     try {
-      const response = await fetch('api/schools/knust-admission');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/schools/knust-admission`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
