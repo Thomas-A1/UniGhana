@@ -9,8 +9,9 @@ export default defineConfig({
       '/api': {
         target: 'https://unighana-backend-awyo.onrender.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, ''),
       }
     }
   }
 });
+
