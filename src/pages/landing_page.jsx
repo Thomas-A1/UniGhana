@@ -1,10 +1,22 @@
-import Header from "../components/header"
+import Header from "../components/header";
+import { useEffect } from "react";
 import Footer from '../components/footer';
 import CardList from '../components/card';
 import { Check, HeartHandshake, BookOpen, GraduationCap } from 'lucide-react';
 
 
 const Landingpage = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      sessionStorage.setItem("authToken", token);
+      sessionStorage.setItem("isAuthenticated", "true");
+      window.history.replaceState({}, "", "/landing-page");
+      window.location.reload();
+    }
+  }, []);
   return (
     <div>
       <Header />

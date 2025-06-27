@@ -68,7 +68,7 @@ function LoginPage() {
       }));
     }
   };
-
+  // const deployedapi = `${import.meta.env.VITE_API_BASE_URL}/login`;
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -76,19 +76,16 @@ function LoginPage() {
     setLoading(true);
     console.log('Sending request to:', '/api/login');
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        }
-      );
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
       const data = await response.json();
       
@@ -155,12 +152,14 @@ function LoginPage() {
       </button>
 
       {/* Modal Container */}
-      <ModalContainer 
+      <ModalContainer
         isOpen={modalOpen}
         status={modalStatus}
         message={modalMessage}
         onClose={closeModal}
-        animationData={modalStatus === 'success' ? successAnimation : errorAnimation}
+        animationData={
+          modalStatus === "success" ? successAnimation : errorAnimation
+        }
       />
 
       <div className="flex min-h-[calc(100vh-2rem)] items-center justify-center">
@@ -299,7 +298,7 @@ function LoginPage() {
                   "Sign in"
                 )}
               </button>
-              
+
               {/* Error message below the submit button */}
               {error.form && (
                 <div className="mt-4 bg-red-500 text-white p-4 rounded-md">
@@ -327,6 +326,10 @@ function LoginPage() {
               </div>
               <button
                 type="button"
+                onClick={() => {
+                  window.location.href =
+                    `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+                }}
                 className={`flex w-full items-center justify-center rounded-lg transition-transform duration-300 ${
                   darkMode
                     ? "bg-white/20 text-white border border-white/30 hover:bg-white/25"

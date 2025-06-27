@@ -2,6 +2,8 @@
 import { useState, useEffect} from 'react';
 import VerificationModal from '../components/VerificationModal';
 import { useNavigate } from 'react-router-dom';
+import GoogleSignupErrorModal from "../components/GoogleSignupErrorModal"; // NEW MODAL
+
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -19,22 +21,43 @@ function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [userId, setUserId] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
+  const [userId, setUserId] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [googleError, setGoogleError] = useState(null);
 
   // Check if user is already authenticated on page load
   useEffect(() => {
     const checkAuth = () => {
-      const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+      const isAuthenticated =
+        sessionStorage.getItem("isAuthenticated") === "true";
       if (isAuthenticated) {
-        navigate('/landing-page');
+        navigate("/landing-page");
       }
     };
-    
+
     checkAuth();
   }, [navigate]);
 
+  // ✅ Check for Google signup error in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+
+    if (error) {
+      if (error === "google_account_exists") {
+        setGoogleError("An account already exists with Google...");
+      } else if (error === "email_password_exists") {
+        setGoogleError(
+          "This email is already registered with email and password. Please log in instead."
+        );
+      } else {
+        setGoogleError(
+          "Something went wrong during Google sign-up. Please try again."
+        );
+      }
+    }
+
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -73,47 +96,60 @@ function RegisterPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
-    console.log('Sending request to:', '/api/signup');
+    console.log("Sending request to:", "/api/signup");
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          educationLevel: formData.educationLevel,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            password: formData.password,
+            educationLevel: formData.educationLevel,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        // Success - Save the userId and show verification modal
-        setUserId(data.userId);
-        setShowVerificationModal(true);
-        setSuccessMessage('User created successfully. Please verify your email.');
+        if (data.userId) {
+          setUserId(data.userId);
+          setShowVerificationModal(true);
+          setSuccessMessage(
+            "User created successfully. Please verify your email."
+          );
+        } else {
+          setErrors({
+            form: "Registration succeeded but no user ID returned.",
+          });
+        }
       } else {
-        // Handle the error returned from the backend
-        setErrors({ form: data.error || data.message || 'Registration failed. Please try again.' });
-        // Clear the error message after 5 seconds
+        // Handle errors
+        setErrors({
+          form:
+            data.error ||
+            data.message ||
+            "Registration failed. Please try again.",
+        });
         setTimeout(() => {
           setErrors((prevErrors) => ({ ...prevErrors, form: "" }));
-        }, 5000); // 7 seconds
+        }, 5000);
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ form: 'An error occurred. Please try again later.' });
+      console.error("Registration error:", error);
+      setErrors({ form: "An error occurred. Please try again later." });
       // Clear the error message after 5 seconds
       setTimeout(() => {
         setErrors((prevErrors) => ({ ...prevErrors, form: "" }));
@@ -121,28 +157,30 @@ function RegisterPage() {
     } finally {
       setLoading(false);
     }
-
   };
 
   const handleResendCode = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/resend-verification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.message);
       }
-      
+
       return true;
     } catch (error) {
-      console.error('Error resending code:', error);
+      console.error("Error resending code:", error);
       throw error;
     }
   };
@@ -174,10 +212,10 @@ function RegisterPage() {
         <div className="w-full max-w-md mx-auto">
           <div className="flex flex-col items-center mb-8">
             <div
-                className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
-                  darkMode ? "bg-white/10" : "bg-gray-800/10"
-                } backdrop-blur-md`}
-              >
+              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
+                darkMode ? "bg-white/10" : "bg-gray-800/10"
+              } backdrop-blur-md`}
+            >
               <i
                 className={`fas fa-graduation-cap text-2xl ${
                   darkMode ? "text-purple-200" : "text-gray-600"
@@ -248,15 +286,15 @@ function RegisterPage() {
                 placeholder="Email address"
                 className={`w-full h-12 px-4 rounded-md border ${
                   darkMode
-                      ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
-                      : "border-gray-300 bg-white/90 text-gray-900"
-                  } px-5 py-4 backdrop-blur-xl transition-all duration-300 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:ring-offset-0 ${
+                    ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
+                    : "border-gray-300 bg-white/90 text-gray-900"
+                } px-5 py-4 backdrop-blur-xl transition-all duration-300 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:ring-offset-0 ${
                   errors.email ? "border-red-500" : ""
                 }`}
                 value={formData.email}
                 onChange={handleChange}
               />
-              
+
               {errors.email && (
                 <span className="text-red-500 text-sm mt-1">
                   {errors.email}
@@ -270,9 +308,9 @@ function RegisterPage() {
                 placeholder="Educational Level"
                 className={`w-full h-12 px-4 rounded-md border ${
                   darkMode
-                      ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
-                      : "border-gray-300 bg-white/90 text-gray-900"
-                  } px-5 py-4 backdrop-blur-xl transition-all duration-300 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:ring-offset-0 ${
+                    ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
+                    : "border-gray-300 bg-white/90 text-gray-900"
+                } px-5 py-4 backdrop-blur-xl transition-all duration-300 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:ring-offset-0 ${
                   errors.educationLevel ? "border-red-500" : ""
                 }`}
                 value={formData.educationLevel}
@@ -297,16 +335,9 @@ function RegisterPage() {
                   isDropdownOpen
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 -translate-y-2 pointer-events-none"
-                } ${
-                  darkMode ? "bg-purple-800 backdrop-blur-sm" : "bg-white"
-                }`}
+                } ${darkMode ? "bg-purple-800 backdrop-blur-sm" : "bg-white"}`}
               >
-                {[
-                  "High School",
-                  "Undergraduate",
-                  ""
-
-                ].map((level) => (
+                {["High School", "Undergraduate", ""].map((level) => (
                   <div
                     key={level}
                     onClick={() => {
@@ -341,7 +372,7 @@ function RegisterPage() {
                   className={`w-full h-12 px-4 rounded-md border ${
                     darkMode
                       ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
-                      :  "border-gray-300 bg-white/90 text-gray-900"
+                      : "border-gray-300 bg-white/90 text-gray-900"
                   } transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${
                     errors.password ? "border-red-500" : ""
                   }`}
@@ -362,7 +393,7 @@ function RegisterPage() {
                   className={`w-full h-12 px-4 rounded-md border ${
                     darkMode
                       ? "border-white/10 bg-white/10 text-white text-white placeholder-white"
-                      :  "border-gray-300 bg-white/90 text-gray-900"
+                      : "border-gray-300 bg-white/90 text-gray-900"
                   } transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${
                     errors.confirmPassword ? "border-red-500" : ""
                   }`}
@@ -432,27 +463,31 @@ function RegisterPage() {
                 ></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                  <span
-                    className={`bg-transparent px-2 ${
-                      darkMode ? "text-gray-300" : "text-gray-600"
-                    }`}
-                  >
-                    Or continue with
-                  </span>
-                </div>
+                <span
+                  className={`bg-transparent px-2 ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
+                  Or continue with
+                </span>
+              </div>
             </div>
-             <button
-                type="button"
-                // onClick={handleGoogleSignIn}
-                className={`flex w-full items-center justify-center rounded-lg transition-transform duration-300 ${
-                  darkMode
-                    ? "bg-white/20 text-white border border-white/30 hover:bg-white/25"
-                    : "bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 text-gray-700 font-medium shadow-md hover:scale-[1.02]"
-                } px-5 py-4`}
-              >
-                <i className="fab fa-google mr-2"></i>
-                Sign up with Google
-              </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href =
+                  "https://unighana-backend-awyo.onrender.com/auth/google";
+              }}
+              // onClick={handleGoogleSignIn}
+              className={`flex w-full items-center justify-center rounded-lg transition-transform duration-300 ${
+                darkMode
+                  ? "bg-white/20 text-white border border-white/30 hover:bg-white/25"
+                  : "bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 text-gray-700 font-medium shadow-md hover:scale-[1.02]"
+              } px-5 py-4`}
+            >
+              <i className="fab fa-google mr-2"></i>
+              Sign up with Google
+            </button>
             <p
               className={`text-center mt-6 ${
                 darkMode ? "text-purple-200" : "text-gray-600"
@@ -473,28 +508,39 @@ function RegisterPage() {
           </form>
         </div>
 
-  
-         {/* <div className={`${darkMode ? "bg-purple-800/30" : "bg-purple-800/30"} rounded-xl p-2 flex items-center justify-center`}> */}
-  <div className={`hidden md:flex ${darkMode ? "bg-purple-800/30" : "bg-purple-600"} rounded-xl p-2 items-center justify-center`}>
-  <img
-    src="/unighana-logo-transparent-bg.png"
-    alt="UniGhana Logo"
-    className="w-4/5 h-4/5 object-contain"
-  />
-</div>
- 
- {/* Verification Modal */}
-      {showVerificationModal && userId &&(
-        <VerificationModal
-          userId={userId}
-          email={formData.email}
-          onResendCode={handleResendCode}
-          onClose={() => setShowVerificationModal(false)}
-        />
-      )}
+        {/* <div className={`${darkMode ? "bg-purple-800/30" : "bg-purple-800/30"} rounded-xl p-2 flex items-center justify-center`}> */}
+        <div
+          className={`hidden md:flex ${
+            darkMode ? "bg-purple-800/30" : "bg-purple-600"
+          } rounded-xl p-2 items-center justify-center`}
+        >
+          <img
+            src="/unighana-logo-transparent-bg.png"
+            alt="UniGhana Logo"
+            className="w-4/5 h-4/5 object-contain"
+          />
+        </div>
 
-      
-      <style>{`
+        {/* Verification Modal */}
+        {showVerificationModal && userId && (
+          <VerificationModal
+            userId={userId}
+            email={formData.email}
+            onResendCode={handleResendCode}
+            onClose={() => setShowVerificationModal(false)}
+          />
+        )}
+
+        {/* Google Signup Error Modal */}
+        {googleError && (
+          <GoogleSignupErrorModal
+            message={googleError}
+            darkMode={darkMode}
+            navigate={navigate}
+          />
+        )}
+
+        <style>{`
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
@@ -520,7 +566,6 @@ function RegisterPage() {
     animation: fadeIn 0.5s ease-out;
   }
 `}</style>
-        
       </div>
     </div>
   );
