@@ -29,6 +29,14 @@ const UniversityPage = () => {
   const userData = sessionStorage.getItem("userData");
   const userId = userData ? JSON.parse(userData).id : null;
 
+  const getAuthHeaders = () => {
+    const token = sessionStorage.getItem("authToken");
+    return {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+  };
+
   useEffect(() => {
     const fetchUniversityData = async () => {
       setLoading(true);
@@ -127,23 +135,23 @@ const UniversityPage = () => {
   }, [id]);
 
   // Check bookmark status
-  useEffect(() => {
-    if (!userId || !id) return;
+useEffect(() => {
+  if (!userId || !id) return;
 
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmarks/${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.bookmarks)) {
-          const isBookmarked = data.bookmarks.some(
-            (school) => school.id === id
-          );
-          setBookmarked(isBookmarked);
-        }
-      })
-      .catch(() => {
-        console.error("Failed to check bookmark status");
-      });
-  }, [userId, id]);
+  fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmarks/${userId}`, {
+    headers: getAuthHeaders(), 
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success && Array.isArray(data.bookmarks)) {
+        const isBookmarked = data.bookmarks.some((school) => school.id === id);
+        setBookmarked(isBookmarked);
+      }
+    })
+    .catch(() => {
+      console.error("Failed to check bookmark status");
+    });
+}, [userId, id]);
 
   // Combine static and API data
   const university = universityData ? {
@@ -190,14 +198,14 @@ const UniversityPage = () => {
   ];
 
   const handleBookmark = async () => {
-    if (!userId) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to bookmark universities.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!userId) {
+    //   toast({
+    //     title: "Authentication Required",
+    //     description: "Please log in to bookmark universities.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (bookmarkLoading) return;
 
@@ -205,11 +213,14 @@ const UniversityPage = () => {
 
     try {
       if (Bookmarked) {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/unbookmark`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, schoolId: id }),
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/unbookmark`,
+          {
+            method: "POST",
+            headers: getAuthHeaders(), // Add auth headers
+            body: JSON.stringify({ userId, schoolId: id }),
+          }
+        );
         const data = await res.json();
         if (data.success) {
           setBookmarked(false);
@@ -218,11 +229,14 @@ const UniversityPage = () => {
           toast.error("Failed to remove bookmark");
         }
       } else {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/bookmark`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, school: university }),
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/bookmark`,
+          {
+            method: "POST",
+            headers: getAuthHeaders(), // Add auth headers
+            body: JSON.stringify({ userId, school: university }),
+          }
+        );
         const data = await res.json();
         if (data.success) {
           setBookmarked(true);
